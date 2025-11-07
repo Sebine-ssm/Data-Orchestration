@@ -21,7 +21,7 @@ with DAG(
     default_args={"owner": "IDS706", "retries": 1, "retry_delay": timedelta(minutes=2)},
 ) as dag:
 
-    # --- ETL TaskGroup ---
+    # ETL TaskGroup
     with TaskGroup(
         group_id="etl_group", tooltip="Ingest, transform, merge, load"
     ) as etl_group:
@@ -174,7 +174,7 @@ with DAG(
         loaded = load_csv_to_pg(conn_id="Postgres", csv_path=m_file, table=TARGET_TABLE)
         p_file >> a_file >> m_file >> loaded
 
-    # --- Analysis TaskGroup ---
+    # Analysis TaskGroup
     with TaskGroup(
         group_id="analysis_group", tooltip="Analyze and visualize healthcare data"
     ) as analysis_group:
@@ -206,7 +206,7 @@ with DAG(
 
         dashboard = analyze_healthcare_data()
 
-    # --- Cleanup ---
+    # Cleanup
     @task()
     def cleanup_folder(folder_path: str = OUTPUT_DIR) -> None:
         for filename in os.listdir(folder_path):
@@ -215,5 +215,5 @@ with DAG(
                 os.remove(file_path)
         print("Cleaned up intermediate CSV files.")
 
-    # --- DAG dependencies ---
+    # DAG dependencies
     etl_group >> analysis_group >> cleanup_folder()
