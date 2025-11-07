@@ -97,6 +97,65 @@ Open your browser to: [**http://localhost:8080**](http://localhost:8080)
 
 The 'dags' folder in this repo has a file called 'healthcare.py' file that has the codes for doing ETL and visualization on healthcare data. 
 
+# Task Flow
+
+[fetch_patients, fetch_appointments] → merge_csvs → load_csv_to_pg
+→ analyze_healthcare_data → cleanup_folder
+
+## Healthcare pipeline
+
+# ETL Task Group (`etl_group`)
+
+**fetch_patients()**
+- Generates 50 synthetic patient records using Faker
+- Creates patient_id (UUID4), demographics, contact information
+- Outputs: `patients.csv`
+
+
+**fetch_appointments()**
+- Generates 50 appointment records across 5 departments
+- Creates appointment details with scheduling and billing info
+- Outputs: `appointments.csv`
+- Runs in parallel with `fetch_patients`
+
+
+**merge_csvs()**
+- Combines patient and appointment data (1:1 mapping)
+- Extracts relevant fields for analysis
+- Outputs: `merged_data.csv`
+
+
+**load_csv_to_pg()**
+- Creates PostgreSQL schema `week8_demo` if not exists
+- Creates table `healthcare_records` with dynamic schema
+- Loads merged data into PostgreSQL
+- Uses `PostgresHook` for database connection
+- Returns: Number of records loaded (50)
+
+# Analysis Task Group (`analysis_group`)
+
+**analyze_healthcare_data()**
+- Reads `merged_data.csv` using Pandas
+- Generates 4-panel matplotlib visualization (13x8 inches)
+- Outputs: `dashboard.png`
+
+**Visualizations:**
+1. **Top-Left**: Appointments by Department (bar chart)
+2. **Top-Right**: Appointment Status (pie chart with percentages)
+3. **Bottom-Left**: Blood Type Distribution (horizontal bar)
+4. **Bottom-Right**: Average Consultation Fee by Department (horizontal bar)
+
+# Cleanup Task
+
+**cleanup_folder()**
+- Removes all CSV files from `/opt/airflow/data`
+- Preserves `dashboard.png` for analysis review
+- Runs after successful analysis completion
+
+# Task Dependencies
+etl_group >> analysis_group >> cleanup_folder()
+
+
 After running The 'healthcare.py' file, you will see something like this:
 ![Successfull](<Successful dag (healthcare) airflow.png>)
 
